@@ -21,10 +21,10 @@ class VKLoader:
 
     def __init__(self, token):
         self.token = token
-        self.vk_session = vk_api.VkApi(token=TOKEN)
+        self.vk_session = vk_api.VkApi(token=self.token)
         self.api = self.vk_session.get_api()
 
-    def get_vk_list(self, city=None, sex=None, age=20):
+    def get_vk_list(self, city=None, sex=None, age=None):
         """Принимает параметры для поиска пользователей VK, """
 
         if sex == 1:
