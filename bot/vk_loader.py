@@ -116,3 +116,4 @@ class VKLoader:
                 return random.choice(user_info)
         except Exception:
             return False
+

@@ -3,7 +3,6 @@ import datetime
 import vk_api
 from vk_api import VkTools
 
-
 def _get_age(bdate):
     """Принимает дату рождения в любом формате, возвращает возраст пользователя."""
 
@@ -71,16 +70,23 @@ class VKLoader:
 
     def get_foto(self, user_id):
         """Принимает ID пользователя, возвращает список фото и их параметров из альбома "profile"."""
+
         try:
             vk_user_foto = self.api.photos.get(
                 owner_id=user_id,
                 album_id='profile',
-                count=3,
+                count=10,
                 extended=1,
                 photo_sizes=1
             )
         except Exception:
-            return 'Пользователь закрыл фото настройками приватности.'
+            return []
         else:
-            return vk_user_foto
-
+            foto_list = []
+            for item in vk_user_foto['items']:
+                foto_list.append({'likes': item['likes']['count'], 'url': item['sizes'][-1]['url']})
+            sort_foto = sorted(foto_list, key=lambda x: x['likes'], reverse=True)
+            foto_list.clear()
+            for item in sort_foto[:3]:
+                foto_list.append(item['url'])
+            return foto_list

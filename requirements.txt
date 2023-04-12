@@ -1,3 +1,9 @@
 psycopg2-binary==2.9.5
 SQLAlchemy==2.0.3
 
+        else:
+            foto_list = []
+            for item in vk_user_foto['items']:
+                foto_list.append({'likes': item['likes']['count'], 'url': item['sizes'][-1]['url']})
+                sort_foto = sorted(foto_list, key=lambda x: x['likes'], reverse=True)
+            return sort_foto[:3]

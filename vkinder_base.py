@@ -144,10 +144,10 @@ def __load_base_table():
     session.commit()
 
 # считывание пароля из файла по указанному пути. У меня создан файл.txt в нем первой строкой записан пароль от postgres
-with open('D:\Python\pas.txt', encoding='utf-8') as file:
-    pas = file.readline().rstrip('\n')
+#with open('D:\Python\pas.txt', encoding='utf-8') as file:
+    #pas = file.readline().rstrip('\n')
 
-DSN = f'postgresql://postgres:{pas}@localhost:5432/vk_bot_base'
+DSN = f'postgresql://postgres:NetologY@localhost:5432/vk_bot_base'
 engine = sq.create_engine(DSN)
 
 create_tables(engine)
