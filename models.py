@@ -22,7 +22,8 @@ class Clients(Base):
     first_name = sq.Column(sq.String(length=40), nullable=False)
     last_name = sq.Column(sq.String(length=40), nullable=False)
     link_profile = sq.Column(sq.String(length=255), nullable=False)
-    city = sq.Column(sq.String(length=50), nullable=False)
+    city = sq.Column(sq.String(length=50), nullable=True)
+    age = sq.Column(sq.Integer)
     id_gender = sq.Column(sq.Integer, sq.ForeignKey('gender.id_gender'), nullable=False)
 
     gender = relationship(Gender, backref='clients')
@@ -34,7 +35,8 @@ class Users(Base):
     first_name = sq.Column(sq.String(length=15), nullable=False)
     last_name = sq.Column(sq.String(length=40), nullable=False)
     link_profile = sq.Column(sq.String(length=255), nullable=False)
-    city = sq.Column(sq.String(length=50), nullable=False)
+    city = sq.Column(sq.String(length=50), nullable=True)
+    age = sq.Column(sq.Integer)
     id_gender = sq.Column(sq.Integer, sq.ForeignKey('gender.id_gender'), nullable=False)
     id_status = sq.Column(sq.Integer, sq.ForeignKey('status.id_status'), nullable=False)
 
@@ -56,11 +58,11 @@ class LinksFoto(Base):
     __tablename__ = 'links'
 
     id_link = sq.Column(sq.Integer, primary_key=True)
-    link = sq.Column(sq.String(length=255), nullable=False)
+    link = sq.Column(sq.String(length=255), nullable=True)
     id_user = sq.Column(sq.Integer, sq.ForeignKey('users.id_user'), nullable=False)
 
     users = relationship(Users, backref='links')
 
 def create_tables(engine):
-    #Base.metadata.drop_all(engine)  #для обнуления базы р аскоментировать
+    #Base.metadata.drop_all(engine)  #для обнуления базы раскоментировать
     Base.metadata.create_all(engine)

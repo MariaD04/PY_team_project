@@ -10,6 +10,7 @@ def load_client(dict_client):
         last_name=dict_client['last_name'],
         link_profile=dict_client['link_profile'],
         city=dict_client['city'],
+        age=dict_client['age'],
         id_gender=dict_client['gender']
     )
     session.add(client)
@@ -23,6 +24,7 @@ def load_user(dict_user):
         last_name=dict_user['last_name'],
         link_profile=dict_user['link_profile'],
         city=dict_user['city'],
+        age=dict_user['age'],
         id_gender=dict_user['gender'],
         id_status=dict_user['status']
     )
@@ -40,12 +42,19 @@ def load_clientuser(id_client, id_user):
 
 def load_user_links(id_user, list_links):
     # добавление ссылок на 3 фотографии из профиля
-    for tuple in list_links:
+    if list_links == []:
         links = LinksFoto(
-            link=tuple,
+            link=None,
             id_user=id_user
         )
         session.add(links)
+    else:
+        for tuple in list_links:
+            links = LinksFoto(
+                link=tuple,
+                id_user=id_user
+            )
+            session.add(links)
     session.commit()
 
 def check_client_existing(dict_client):
@@ -62,6 +71,8 @@ def check_client_existing(dict_client):
             attribute.link_profile = dict_client['link_profile']
         if dict_client['city'] != attribute.city:
             attribute.city = dict_client['city']
+        if dict_client['age'] != attribute.age:
+            attribute.age = dict_client['age']
         if dict_client['gender'] != attribute.id_gender:
             attribute.id_gender = dict_client['gender']
         session.add(attribute)
@@ -71,13 +82,12 @@ def check_client_existing(dict_client):
 def check_user_existing(dict_user, list_links):
     # проверка на существование партнера в БД и обновление данных
     update_user = session.query(Users).filter(Users.id_user == dict_user['id_user']).all()
-    update_links = session.query(LinksFoto).filter(LinksFoto.id_user == dict_user['id_user'])
     if update_user == []:
         return True
-    for index, tuple in enumerate(update_links):
-        tuple.link = list_links[index]
-        session.add(tuple)
-        session.commit()
+    session.query(LinksFoto).filter(LinksFoto.id_user == dict_user['id_user']).delete(synchronize_session='fetch')
+    session.commit()
+    load_user_links(dict_user['id_user'], list_links)
+
     for attribute in update_user:
         if dict_user['first_name'] != attribute.first_name:
             attribute.first_name = dict_user['first_name']
@@ -87,6 +97,8 @@ def check_user_existing(dict_user, list_links):
             attribute.link_profile = dict_user['link_profile']
         if dict_user['city'] != attribute.city:
             attribute.city = dict_user['city']
+        if dict_user['age'] != attribute.age:
+            attribute.age = dict_user['age']
         if dict_user['gender'] != attribute.id_gender:
             attribute.id_gender = dict_user['gender']
         if dict_user['status'] != attribute.id_status:
@@ -102,6 +114,7 @@ def show_list_favorites(dict_client):
         Users.last_name,
         Users.link_profile,
         Users.city,
+        Users.age,
         Gender.title
     ).join(Gender).join(Status).join(ClientsUsers).filter(
         Users.id_status == 1,
@@ -144,10 +157,10 @@ def __load_base_table():
     session.commit()
 
 # считывание пароля из файла по указанному пути. У меня создан файл.txt в нем первой строкой записан пароль от postgres
-#with open('D:\Python\pas.txt', encoding='utf-8') as file:
-    #pas = file.readline().rstrip('\n')
+with open('D:\Python\pas.txt', encoding='utf-8') as file:
+    pas = file.readline().rstrip('\n')
 
-DSN = f'postgresql://postgres:NetologY@localhost:5432/vk_bot_base'
+DSN = f'postgresql://postgres:{pas}@localhost:5432/vk_bot_base'
 engine = sq.create_engine(DSN)
 
 create_tables(engine)

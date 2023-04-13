@@ -2,14 +2,17 @@ import re
 import datetime
 import vk_api
 from vk_api import VkTools
+import random
+from vkinder_base import show_list_favorites, load_client, load_user, load_clientuser, load_user_links
+from vkinder_base import check_client_existing, check_clientuser_exist, check_user_existing
 
 def _get_age(bdate):
     """Принимает дату рождения в любом формате, возвращает возраст пользователя."""
 
     current_year = datetime.datetime.now().year
-    result = re.search(r'(\d*.\d*.)?(\d\d\d\d)', bdate)
+    result = re.search(r'[\d]{4}', bdate)
     if result:
-        age = current_year - result.group(2)
+        age = current_year - int(result[0])
         return age
     else:
         return None
@@ -23,12 +26,55 @@ class VKLoader:
         self.vk_session = vk_api.VkApi(token=self.token)
         self.api = self.vk_session.get_api()
 
-    def get_vk_list(self, city=None, sex=None, age=None):
+    def _load_base(self, status, dict_user, dict_client, list_links):
+        dict_user['status'] = status  # в словарь дописывается поле статус (1- избранное, 2 - черный список)
+        if check_clientuser_exist(dict_client['id_client'], dict_user['id_user']) == 1:
+            # если партнер для данного клиента есть в БД, обновит при необходимости информацию
+            check_user_existing(dict_user, list_links)
+        elif check_clientuser_exist(dict_client['id_client'], dict_user['id_user']) == 0:
+            # если партнера для данного клиента нет в промежуточной таблице связи клиента и партнера
+            if check_user_existing(dict_user, list_links):
+                # если партнер есть в базе для других клиентов, обновит при необходимости данные или загрузит
+                # нового партнера для данного клиента
+                load_user(dict_user)
+                load_user_links(dict_user['id_user'], list_links)
+            # запишет данные в промежуточную таблицу, связь клиента и партнера
+            load_clientuser(dict_client['id_client'], dict_user['id_user'])
+
+    def dict_user_list(self, user_id):
+        dict_client = self._get_user_params(user_id)[0]
+        for item in self.get_vk_list(self._get_user_params(user_id)[1]):
+            dict_user = {
+                'id_user': item['id'],
+                'first_name': item['first_name'],
+                'last_name': item['last_name'],
+                'link_profile': 'https://vk.com/' + item['domain']
+            }
+            if 'city' in item:
+                dict_user['city'] = item['city']['title']
+            else:
+                dict_user['city'] = None
+            if 'sex' in item:
+                dict_user['gender'] = item['sex']
+            else:
+                dict_user['gender'] = None
+            if 'bdate' in item:
+                dict_user['age'] = _get_age(item['bdate'])
+            else:
+                dict_user['age'] = None
+
+            list_links = self.get_foto(dict_user['id_user'])
+            if check_clientuser_exist(dict_client['id_client'], dict_user['id_user']) == 2:
+                #print('Не показывать, ищем следующего')
+                continue
+            return [dict_user, dict_client, list_links]
+
+    def get_vk_list(self, search_info):
         """Принимает параметры для поиска пользователей VK, """
 
-        if sex == 1:
+        if search_info['sex'] == 1:
             search_sex = 2
-        elif sex == 2:
+        elif search_info['sex'] == 2:
             search_sex = 1
         else:
             search_sex = None
@@ -36,10 +82,11 @@ class VKLoader:
             method='users.search',
             max_count=1000,
             values={
-                'city_id': city,
-                'age_from': age,
-                'age_to': age,
-                'sex': search_sex
+                'hometown': search_info['city'],
+                'age_from': search_info['age'],
+                'age_to': search_info['age'],
+                'sex': search_sex,
+                'fields': 'city, domain, sex, bdate'
             }
         )
         return vk_list
@@ -49,33 +96,44 @@ class VKLoader:
 
         vk_user_info = self.api.users.get(
             user_ids=user_id,
-            fields='city, sex, bdate'
+            fields='city, sex, bdate, domain'
         )
         for item in vk_user_info:
             user_dict = dict(item)
-        user_info = {}
+        search_info = {}
+        dict_client = {
+            'id_client': user_dict['id'],
+            'first_name': user_dict['first_name'],
+            'last_name': user_dict['last_name'],
+            'link_profile': 'https://vk.com/' + user_dict['domain']
+        }
+
         if 'city' in user_dict:
-            user_info['city'] = user_dict['city']['id']
+            dict_client['city'] = user_dict['city']['title']
         else:
-            user_info['city'] = None
+           dict_client['city'] = None
         if 'sex' in user_dict:
-            user_info['sex'] = user_dict['sex']
+            dict_client['gender'] = user_dict['sex']
         else:
-            user_info['sex'] = None
+            dict_client['gender'] = None
         if 'bdate' in user_dict:
-            user_info['age'] = _get_age(user_dict['bdate'])
+            dict_client['age'] = _get_age(user_dict['bdate'])
         else:
-            user_info['age'] = None
-        return user_info
+            dict_client['age'] = None
+
+        search_info['city'] = dict_client['city']
+        search_info['sex'] = dict_client['gender']
+        search_info['age'] = dict_client['age']
+
+        return dict_client, search_info
 
     def get_foto(self, user_id):
         """Принимает ID пользователя, возвращает список фото и их параметров из альбома "profile"."""
-
         try:
             vk_user_foto = self.api.photos.get(
                 owner_id=user_id,
                 album_id='profile',
-                count=10,
+                count=50,
                 extended=1,
                 photo_sizes=1
             )
@@ -90,3 +148,10 @@ class VKLoader:
             for item in sort_foto[:3]:
                 foto_list.append(item['url'])
             return foto_list
+
+    def random_user(self, user_info):
+        try:
+            if user_info:
+                return random.choice(user_info)
+        except Exception:
+            return False
