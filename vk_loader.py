@@ -6,18 +6,6 @@ import random
 from vkinder_base import show_list_favorites, load_client, load_user, load_clientuser, load_user_links
 from vkinder_base import check_client_existing, check_clientuser_exist, check_user_existing
 
-def _get_age(bdate):
-    """Принимает дату рождения в любом формате, возвращает возраст пользователя."""
-
-    current_year = datetime.datetime.now().year
-    result = re.search(r'[\d]{4}', bdate)
-    if result:
-        age = current_year - int(result[0])
-        return age
-    else:
-        return None
-
-
 class VKLoader:
     """Класс предназначен для загрузки и обработки данных из VK используемых ботом."""
 
@@ -25,6 +13,17 @@ class VKLoader:
         self.token = token
         self.vk_session = vk_api.VkApi(token=self.token)
         self.api = self.vk_session.get_api()
+
+    def _get_age(self, bdate):
+        """Принимает дату рождения в любом формате, возвращает возраст пользователя."""
+
+        current_year = datetime.datetime.now().year
+        result = re.search(r'[\d]{4}', bdate)
+        if result:
+            age = current_year - int(result[0])
+            return age
+        else:
+            return None
 
     def _load_base(self, status, dict_user, dict_client, list_links):
         dict_user['status'] = status  # в словарь дописывается поле статус (1- избранное, 2 - черный список)
@@ -59,7 +58,7 @@ class VKLoader:
             else:
                 dict_user['gender'] = None
             if 'bdate' in item:
-                dict_user['age'] = _get_age(item['bdate'])
+                dict_user['age'] = self._get_age(item['bdate'])
             else:
                 dict_user['age'] = None
 
@@ -117,7 +116,7 @@ class VKLoader:
         else:
             dict_client['gender'] = None
         if 'bdate' in user_dict:
-            dict_client['age'] = _get_age(user_dict['bdate'])
+            dict_client['age'] = self._get_age(user_dict['bdate'])
         else:
             dict_client['age'] = None
 
@@ -149,9 +148,4 @@ class VKLoader:
                 foto_list.append(item['url'])
             return foto_list
 
-    def random_user(self, user_info):
-        try:
-            if user_info:
-                return random.choice(user_info)
-        except Exception:
-            return False
+

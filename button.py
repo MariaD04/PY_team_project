@@ -1,27 +1,16 @@
-from main import vkinder
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
-def get_button(text, color):
-    return {
-            "action":{
-               "type":"text",
-               "payload":"{\"button\": \"1\"}",
-               "label": f"{text}"
-            },
-            "color": f"{color}"
-            }
+def create_keyboard_first():
+    keyboard = VkKeyboard(one_time=False, inline=True)
+    keyboard.add_button('Начать поиск', VkKeyboardColor.PRIMARY, payload=['start_search'])
+    keyboard.add_button('Продолжить поиск', VkKeyboardColor.PRIMARY, payload=['next_search'])
+    keyboard.add_button('Показать избранных', VkKeyboardColor.PRIMARY, payload=['show_favorite'])
+    return keyboard #.get_keyboard()
 
-keyboard = {
-    "one_time": False,
-    "buttons": [
-    [get_button('начать поиск', 'primary')],
-    [get_button('продолжить поиск', 'primary')],
-    [get_button('показать избранных', 'primary')],
-    [get_button('да', 'positive')],
-    [get_button('нет', 'negative')]
-    ]
-}
+def create_keyboard_second():
+    keyboard = VkKeyboard(one_time=False, inline=True)
+    keyboard.add_button('Да', VkKeyboardColor.POSITIVE, payload=['да'])
+    keyboard.add_button('Нет', VkKeyboardColor.NEGATIVE, payload=['нет'])
+    return keyboard  # .get_keyboard()
 
-def send_(user_id, text):
-    vkinder.vk.method('messages.send', {'user_id': user_id, 'message': text, 'random_id': 0, 'keyboard': keyboard })
-
-keyboard = str(keyboard.decode('utf-8'))
+#print(create_keyboard())

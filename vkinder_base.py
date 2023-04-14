@@ -2,8 +2,9 @@ import sqlalchemy as sq
 from sqlalchemy.orm import sessionmaker
 from models import create_tables, Gender, Status, Users, Clients, LinksFoto, ClientsUsers
 
+
 def load_client(dict_client):
-    #добавление нового клиента
+    # добавление нового клиента
     client = Clients(
         id_client=dict_client['id_client'],
         first_name=dict_client['first_name'],
@@ -15,6 +16,7 @@ def load_client(dict_client):
     )
     session.add(client)
     session.commit()
+
 
 def load_user(dict_user):
     # добавление нового партнера
@@ -31,6 +33,7 @@ def load_user(dict_user):
     session.add(user)
     session.commit()
 
+
 def load_clientuser(id_client, id_user):
     # добавление связи клиента с партнером
     client_user = ClientsUsers(
@@ -39,6 +42,7 @@ def load_clientuser(id_client, id_user):
     )
     session.add(client_user)
     session.commit()
+
 
 def load_user_links(id_user, list_links):
     # добавление ссылок на 3 фотографии из профиля
@@ -57,8 +61,9 @@ def load_user_links(id_user, list_links):
             session.add(links)
     session.commit()
 
+
 def check_client_existing(dict_client):
-    #проверка на существование клиента в БД и обновление данных
+    # проверка на существование клиента в БД и обновление данных
     existing = session.query(Clients).filter(Clients.id_client == dict_client['id_client']).all()
     if existing == []:
         return True
@@ -78,6 +83,7 @@ def check_client_existing(dict_client):
         session.add(attribute)
         session.commit()
     return False
+
 
 def check_user_existing(dict_user, list_links):
     # проверка на существование партнера в БД и обновление данных
@@ -106,10 +112,11 @@ def check_user_existing(dict_user, list_links):
         session.add(attribute)
         session.commit()
 
+
 def show_list_favorites(dict_client):
     # показ списка избранных для данного клиента
-    list_favorites = []
-    favorite = session.query(
+    list_favorites = (session.query(
+        Users.id_user,
         Users.first_name,
         Users.last_name,
         Users.link_profile,
@@ -119,10 +126,17 @@ def show_list_favorites(dict_client):
     ).join(Gender).join(Status).join(ClientsUsers).filter(
         Users.id_status == 1,
         ClientsUsers.id_client == dict_client['id_client']
-    ).all()
-    for attribute in favorite:
-        list_favorites.append(attribute)
+    ).all())
     return list_favorites
+
+def show_links_user(user_id):
+    favorite_links = []
+    favorite_link_user = session.query(
+        LinksFoto.link
+    ).filter(LinksFoto.id_user == user_id).all()
+    for item in favorite_link_user:
+        favorite_links.append(item[0])
+    return favorite_links
 
 def __check_blacklist(id_user):
     # проверка на присутствие в черном списке
@@ -131,9 +145,11 @@ def __check_blacklist(id_user):
         return False
     return True
 
+
 def check_clientuser_exist(id_client, id_user, in_base=0):
     # проверка на существование данных таблице связи клиента с партнером
-    existing = session.query(ClientsUsers).filter(ClientsUsers.id_client == id_client, ClientsUsers.id_user == id_user).all()
+    existing = session.query(ClientsUsers).filter(ClientsUsers.id_client == id_client,
+                                                  ClientsUsers.id_user == id_user).all()
     if existing != []:
         in_base = 1
         if __check_blacklist(id_user):
@@ -141,11 +157,13 @@ def check_clientuser_exist(id_client, id_user, in_base=0):
             return in_base
     return in_base
 
+
 def __check_base_table_exists():
     # проверка наличия данных в таблицах Gender и Status
-    is_exists_gender= session.query(Gender).count()
+    is_exists_gender = session.query(Gender).count()
     is_exists_status = session.query(Status).count()
     return is_exists_gender, is_exists_status
+
 
 def __load_base_table():
     # запись данных в таблицы Gender и Status
@@ -156,8 +174,9 @@ def __load_base_table():
     session.add_all([gender1, gender2, status1, status2])
     session.commit()
 
+
 # считывание пароля из файла по указанному пути. У меня создан файл.txt в нем первой строкой записан пароль от postgres
-with open('D:\Python\pas.txt', encoding='utf-8') as file:
+with open(r'C:\Users\Home\Desktop\Speshilov\Python\VKinder\pas.txt', encoding='utf-8') as file:
     pas = file.readline().rstrip('\n')
 
 DSN = f'postgresql://postgres:{pas}@localhost:5432/vk_bot_base'
@@ -168,8 +187,8 @@ create_tables(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
+
 if __check_base_table_exists() != (2, 2):
     __load_base_table()
 
 session.close()
-
