@@ -176,7 +176,7 @@ def __load_base_table():
 
 
 # считывание пароля из файла по указанному пути. У меня создан файл.txt в нем первой строкой записан пароль от postgres
-with open(r'C:\Users\Home\Desktop\Speshilov\Python\VKinder\pas.txt', encoding='utf-8') as file:
+with open(r'D:\Python\pas.txt', encoding='utf-8') as file:
     pas = file.readline().rstrip('\n')
 
 DSN = f'postgresql://postgres:{pas}@localhost:5432/vk_bot_base'
@@ -186,7 +186,6 @@ create_tables(engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
-#print(','.join(show_links_user(466623813)))
 
 if __check_base_table_exists() != (2, 2):
     __load_base_table()

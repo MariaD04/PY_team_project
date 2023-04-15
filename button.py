@@ -11,4 +11,7 @@ def create_keyboard_second():
     keyboard = VkKeyboard(one_time=False, inline=True)
     keyboard.add_button('В избранное', VkKeyboardColor.POSITIVE)
     keyboard.add_button('В черный список', VkKeyboardColor.NEGATIVE)
+    keyboard.add_button('Не добавлять', VkKeyboardColor.PRIMARY)
+    keyboard.add_line()
+    keyboard.add_button('Остановить поиск', VkKeyboardColor.PRIMARY)
     return keyboard
