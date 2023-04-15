@@ -64,5 +64,5 @@ class LinksFoto(Base):
     users = relationship(Users, backref='links')
 
 def create_tables(engine):
-    Base.metadata.drop_all(engine)  #для обнуления базы раскоментировать
+    #Base.metadata.drop_all(engine)  #для обнуления базы раскоментировать
     Base.metadata.create_all(engine)

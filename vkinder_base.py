@@ -186,7 +186,7 @@ create_tables(engine)
 
 Session = sessionmaker(bind=engine)
 session = Session()
-
+#print(','.join(show_links_user(466623813)))
 
 if __check_base_table_exists() != (2, 2):
     __load_base_table()
