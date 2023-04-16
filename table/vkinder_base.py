@@ -1,10 +1,11 @@
 import sqlalchemy as sq
 from sqlalchemy.orm import sessionmaker
-from models import create_tables, Gender, Status, Users, Clients, LinksFoto, ClientsUsers
+from table.models import Gender, Status, Users, Clients, LinksFoto, ClientsUsers
+from table.models import create_tables
 
 
 def load_client(dict_client):
-    # добавление нового клиента
+    ''' добавление нового клиента '''
     client = Clients(
         id_client=dict_client['id_client'],
         first_name=dict_client['first_name'],
@@ -19,7 +20,7 @@ def load_client(dict_client):
 
 
 def load_user(dict_user):
-    # добавление нового партнера
+    ''' добавление найденного друга '''
     user = Users(
         id_user=dict_user['id_user'],
         first_name=dict_user['first_name'],
@@ -35,7 +36,7 @@ def load_user(dict_user):
 
 
 def load_clientuser(id_client, id_user):
-    # добавление связи клиента с партнером
+    ''' добавление связи в таблицу отношений '''
     client_user = ClientsUsers(
         id_client=id_client,
         id_user=id_user
@@ -45,7 +46,7 @@ def load_clientuser(id_client, id_user):
 
 
 def load_user_links(id_user, list_links):
-    # добавление ссылок на 3 фотографии из профиля
+    ''' добавление ссылок на фотографии из профиля '''
     if list_links == []:
         links = LinksFoto(
             link=None,
@@ -63,8 +64,10 @@ def load_user_links(id_user, list_links):
 
 
 def check_client_existing(dict_client):
-    # проверка на существование клиента в БД и обновление данных
-    existing = session.query(Clients).filter(Clients.id_client == dict_client['id_client']).all()
+    ''' проверка на существование клиента в БД и обновление данных '''
+    existing = session.query(Clients).filter(
+        Clients.id_client == dict_client['id_client']
+    ).all()
     if existing == []:
         return True
     for attribute in existing:
@@ -86,14 +89,17 @@ def check_client_existing(dict_client):
 
 
 def check_user_existing(dict_user, list_links):
-    # проверка на существование партнера в БД и обновление данных
-    update_user = session.query(Users).filter(Users.id_user == dict_user['id_user']).all()
+    ''' проверка на существование друга в БД и обновление данных '''
+    update_user = session.query(Users).filter(
+        Users.id_user == dict_user['id_user']
+    ).all()
     if update_user == []:
         return True
-    session.query(LinksFoto).filter(LinksFoto.id_user == dict_user['id_user']).delete(synchronize_session='fetch')
+    session.query(LinksFoto).filter(
+        LinksFoto.id_user == dict_user['id_user']
+    ).delete(synchronize_session='fetch')
     session.commit()
     load_user_links(dict_user['id_user'], list_links)
-
     for attribute in update_user:
         if dict_user['first_name'] != attribute.first_name:
             attribute.first_name = dict_user['first_name']
@@ -114,7 +120,7 @@ def check_user_existing(dict_user, list_links):
 
 
 def show_list_favorites(dict_client):
-    # показ списка избранных для данного клиента
+    ''' показ списка избранных для данного клиента '''
     list_favorites = (session.query(
         Users.id_user,
         Users.first_name,
@@ -129,7 +135,9 @@ def show_list_favorites(dict_client):
     ).all())
     return list_favorites
 
+
 def show_links_user(user_id):
+    ''' показ списка ссылок избранных '''
     favorite_links = []
     favorite_link_user = session.query(
         LinksFoto.link
@@ -138,35 +146,39 @@ def show_links_user(user_id):
         favorite_links.append(item[0])
     return favorite_links
 
+
 def __check_blacklist(id_user):
-    # проверка на присутствие в черном списке
-    blacklist = session.query(Users).filter(Users.id_user == id_user, Users.id_status == 2).all()
+    ''' проверка на присутствие в черном списке '''
+    blacklist = session.query(Users).filter(
+        Users.id_user == id_user, Users.id_status == 2
+    ).all()
     if blacklist == []:
         return False
     return True
 
 
 def check_clientuser_exist(id_client, id_user, in_base=0):
-    # проверка на существование данных таблице связи клиента с партнером
-    existing = session.query(ClientsUsers).filter(ClientsUsers.id_client == id_client,
-                                                  ClientsUsers.id_user == id_user).all()
+    ''' проверка на существование данных таблице отношений '''
+    existing = session.query(ClientsUsers).filter(
+        ClientsUsers.id_client == id_client,
+        ClientsUsers.id_user == id_user
+    ).all()
     if existing != []:
         in_base = 1
         if __check_blacklist(id_user):
             in_base = 2
-            return in_base
     return in_base
 
 
 def __check_base_table_exists():
-    # проверка наличия данных в таблицах Gender и Status
+    ''' проверка наличия данных в таблицах Gender и Status '''
     is_exists_gender = session.query(Gender).count()
     is_exists_status = session.query(Status).count()
     return is_exists_gender, is_exists_status
 
 
 def __load_base_table():
-    # запись данных в таблицы Gender и Status
+    ''' запись данных в таблицы Gender и Status '''
     gender1 = Gender(id_gender=1, title='женский')
     gender2 = Gender(id_gender=2, title='мужской')
     status1 = Status(id_status=1, title='Избранное')
@@ -175,7 +187,7 @@ def __load_base_table():
     session.commit()
 
 
-# считывание пароля из файла по указанному пути. У меня создан файл.txt в нем первой строкой записан пароль от postgres
+''' считывание пароля от postgres из файла по указанному пути '''
 with open(r'D:\Python\pas.txt', encoding='utf-8') as file:
     pas = file.readline().rstrip('\n')
 
