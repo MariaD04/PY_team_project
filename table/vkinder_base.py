@@ -1,3 +1,4 @@
+from config import PAS_BASE
 import sqlalchemy as sq
 from sqlalchemy.orm import sessionmaker
 from table.models import Gender, Status, Users, Clients, LinksFoto, ClientsUsers
@@ -187,11 +188,7 @@ def __load_base_table():
     session.commit()
 
 
-''' считывание пароля от postgres из файла по указанному пути '''
-with open(r'D:\Python\pas.txt', encoding='utf-8') as file:
-    pas = file.readline().rstrip('\n')
-
-DSN = f'postgresql://postgres:{pas}@localhost:5432/vk_bot_base'
+DSN = f'postgresql://postgres:{PAS_BASE}@localhost:5432/vk_bot_base'
 engine = sq.create_engine(DSN)
 
 create_tables(engine)
